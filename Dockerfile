@@ -11,7 +11,7 @@ RUN pip --no-cache-dir install git+https://github.com/Theano/Theano.git@rel-${TH
 
 # install py3-tf-cpu/gpu (Python 3, TensorFlow, CPU/GPU)
 RUN apt-get update -qq \
- && apt-get install --no-install-recommends -y \
+ && apt-get install --no-install-recommends -y --allow-unauthenticated \
     # install python 3
     python3 \
     python3-dev \
@@ -30,6 +30,9 @@ RUN apt-get update -qq \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
+# 版本不能太高了
+RUN pip3 install protobuf==3.6.1
+
 ARG TENSORFLOW_VERSION=1.0.1
 ARG TENSORFLOW_DEVICE=gpu
 ARG TENSORFLOW_APPEND=_gpu
@@ -46,7 +49,7 @@ RUN pip3 --no-cache-dir install git+https://github.com/Theano/Theano.git@rel-${T
 
 # install additional debian packages
 RUN apt-get update -qq \
- && apt-get install --no-install-recommends -y \
+ && apt-get install --no-install-recommends -y --allow-unauthenticated \
     # system tools
     less \
     procps \
@@ -54,6 +57,8 @@ RUN apt-get update -qq \
     # build dependencies
     build-essential \
     libffi-dev \
+    # 需要配置字符集,不然读取资源报乱码
+    locales \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
@@ -63,7 +68,13 @@ WORKDIR /app
 COPY . /app
 
 # Install requirements
-RUN pip install -r requirements.txt
+# protobuf版本不能太高
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple protobuf==3.6.1
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+
+RUN locale-gen en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
 
 # Expose default port and start app
 EXPOSE 8080
